@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TipoConta {
+  RECEBIMENTO
+  DESPESA
+}
+
+enum StatusConta {
+  ATRASADA
+  PENDENTE
+  FINALIZADA
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique(map: "User_email_key")
+  senha     String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+
+  contas    Conta[]
+   
+  @@map("user")
+}
+
+model Conta {
+  id               Int           @id @default(autoincrement())
+  descricao        String
+  tipoConta        TipoConta
+  valor            Decimal       @db.Decimal(10, 2)
+
+  dataVencimento   DateTime
+  dataPrevista     DateTime?
+  dataCadastro     DateTime      @default(now())
+  dataUltimaAlteracao DateTime   @updatedAt
+
+  status           StatusConta
+  
+  
+  usuarioId        Int
+  usuario          User       @relation(fields: [usuarioId], references: [id])
+
+  receita         Receita?
+  despesa         Despesa?
+
+  @@map("conta")
+}
+
+model Receita {
+  id                   Int       @id @default(autoincrement())
+  origem               String?
+  formaRecebimento     String?
+  dataRecebimento      DateTime?
+  contaId              Int      @unique
+  conta                Conta @relation(fields: [contaId],references: [id])
+
+  @@map("receita")
+}
+
+model Despesa {
+  id                   Int       @id @default(autoincrement())
+  origem               String?
+  formaPagamento       String?
+  dataPagamento        DateTime?
+  contaId              Int      @unique
+  conta                Conta @relation(fields: [contaId],references: [id])
+
+  @@map("despesa")
+}

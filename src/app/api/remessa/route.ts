@@ -88,6 +88,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Status inválido" }, { status: 400 });
     }
 
+    // Verificar se já existe uma remessa aberta
+    if (status === "ABERTO") {
+      const remessaAbertaExistente = await prisma.remessa.findFirst({
+        where: {
+          userId,
+          unicoAberto: true,
+        },
+      });
+
+      if (remessaAbertaExistente) {
+        return NextResponse.json(
+          { message: "Já existe uma remessa aberta. Feche a remessa atual antes de criar uma nova." },
+          { status: 409 }
+        );
+      }
+    }
+
     const remessa = await prisma.remessa.create({
       data: {
         mes,
@@ -102,7 +119,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
       return NextResponse.json(
-        { message: "Já existe remessa para esse mês/ano ou já há remessa aberta." },
+        { message: "Já existe remessa para esse mês/ano." },
         { status: 409 }
       );
     }

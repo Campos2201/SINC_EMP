@@ -2,15 +2,14 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum TipoConta {
-  RECEBIMENTO
-  DESPESA
+enum Tipo {
+  ENTRADA
+  SAIDA
 }
 
-enum StatusConta {
-  ATRASADA
-  PENDENTE
-  FINALIZADA
+enum RemessaStatus {
+  ABERTO
+  FECHADO
 }
 
 datasource db {
@@ -19,59 +18,57 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        Int                 @id @default(autoincrement())
   name      String
-  email     String   @unique(map: "User_email_key")
+  email     String              @unique(map: "User_email_key")
   senha     String
-  role      String   @default("admin")
-  createdAt DateTime @default(now())
+  role      String              @default("admin")
+  createdAt DateTime            @default(now())
 
-  contas    Conta[]
+  remessas       Remessa[]
+  reservas       Reserva[]
    
   @@map("user")
 }
 
-model Conta {
+model Remessa{
+  id                Int                   @id @default(autoincrement())
+  mes               Int
+  ano               Int
+  status            RemessaStatus         @default(ABERTO)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  userId            Int
+  user              User                  @relation(fields: [userId], references: [id])
+
+  unicoAberto   Boolean?                  @unique
+
+  movimentacoes  Movimentacao[]
+  @@map("remessa")
+  @@unique([mes, ano]) // evita duas remessas do mesmo mês/ano
+
+}
+
+model Movimentacao {
   id               Int           @id @default(autoincrement())
   descricao        String
-  tipoConta        TipoConta
+  tipo             Tipo
   valor            Decimal       @db.Decimal(10, 2)
+  createdAt        DateTime      @default(now())  
+  remessaId        Int
+  remessa          Remessa       @relation(fields: [remessaId], references: [id])
 
-  dataVencimento   DateTime
-  dataPrevista     DateTime?
-  dataCadastro     DateTime      @default(now())
-  dataUltimaAlteracao DateTime   @updatedAt
-
-  status           StatusConta
+  @@map("movimentacao")
   
-  
-  usuarioId        Int
-  usuario          User       @relation(fields: [usuarioId], references: [id])
-
-  receita         Receita?
-  despesa         Despesa?
-
-  @@map("conta")
 }
 
-model Receita {
-  id                   Int       @id @default(autoincrement())
-  origem               String?
-  formaRecebimento     String?
-  dataRecebimento      DateTime?
-  contaId              Int      @unique
-  conta                Conta @relation(fields: [contaId],references: [id])
+model Reserva {
+  id               Int        @id @default(autoincrement())
+  tipo             Tipo
+  valor            Decimal    @db.Decimal(10, 2)
+  createdAt        DateTime   @default(now())  
+  userId           Int
+  user             User       @relation(fields: [userId], references: [id])
 
-  @@map("receita")
-}
-
-model Despesa {
-  id                   Int       @id @default(autoincrement())
-  origem               String?
-  formaPagamento       String?
-  dataPagamento        DateTime?
-  contaId              Int      @unique
-  conta                Conta @relation(fields: [contaId],references: [id])
-
-  @@map("despesa")
+  @@map("reserva")
 }

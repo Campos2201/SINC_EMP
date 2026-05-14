@@ -1,21 +1,25 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV === "development") {
+  globalForPrisma.prisma = prisma;
+}
 
 async function getPrisma() {
-  const mod = await import("../../../../generated/prisma");
-  const { PrismaClient } = mod as { PrismaClient: any };
-  const g = globalThis as unknown as { prisma?: InstanceType<typeof PrismaClient> };
-  g.prisma = g.prisma || new PrismaClient();
-  return g.prisma;
+  return prisma;
 }
 
 async function getUserIdFromToken(req: NextRequest): Promise<number | null> {
   try {
     const token = req.cookies.get("auth_token")?.value;
-    if (!token) return null;
-    
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    const secretValue = process.env.JWT_SECRET;
+    if (!token || !secretValue) return null;
+
+    const secret = new TextEncoder().encode(secretValue);
     const { payload } = await jwtVerify(token, secret);
     return payload.id as number;
   } catch {

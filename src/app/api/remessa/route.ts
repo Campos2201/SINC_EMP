@@ -1,0 +1,72 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
+import { PrismaClient, Prisma, RemessaStatus } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV === "development") {
+  globalForPrisma.prisma = prisma;
+}
+
+async function getUserIdFromToken(req: NextRequest): Promise<number | null> {
+  try {
+    const token = req.cookies.get("auth_token")?.value;
+    const secretValue = process.env.JWT_SECRET;
+    if (!token || !secretValue) return null;
+
+    const secret = new TextEncoder().encode(secretValue);
+    const { payload } = await jwtVerify(token, secret);
+    return payload.id as number;
+  } catch {
+    return null;
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const userId = await getUserIdFromToken(req);
+    if (!userId) {
+      return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const mes = Number(body.mes);
+    const ano = Number(body.ano);
+    const status = String(body.status || "ABERTO") as RemessaStatus;
+
+    if (!mes || mes < 1 || mes > 12) {
+      return NextResponse.json({ message: "Mês inválido" }, { status: 400 });
+    }
+
+    if (!ano || ano < 2000) {
+      return NextResponse.json({ message: "Ano inválido" }, { status: 400 });
+    }
+
+    if (!["ABERTO", "FECHADO"].includes(status)) {
+      return NextResponse.json({ message: "Status inválido" }, { status: 400 });
+    }
+
+    const remessa = await prisma.remessa.create({
+      data: {
+        mes,
+        ano,
+        status,
+        userId,
+        unicoAberto: status === "ABERTO" ? true : null,
+      },
+    });
+
+    return NextResponse.json(remessa, { status: 201 });
+  } catch (err: any) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return NextResponse.json(
+        { message: "Já existe remessa para esse mês/ano ou já há remessa aberta." },
+        { status: 409 }
+      );
+    }
+
+    console.error("API /api/remessa POST error:", err);
+    return NextResponse.json({ message: err?.message || "Erro ao criar remessa" }, { status: 500 });
+  }
+}

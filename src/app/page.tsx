@@ -94,11 +94,10 @@ export default function PastoSmartAuth() {
       alert("Login realizado.");
       if (body.userRole === 'admin') {
         router.push("/adm");
-      } else if (body.userRole === 'peao') {
-        router.push("/peao");
       } else {
-        router.push("/adm"); // fallback
-      }
+        router.push("/");
+      }  
+     
     } catch (err) {
       console.error(err);
       alert("Falha ao comunicar com o servidor.");

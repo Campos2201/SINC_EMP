@@ -9,7 +9,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [userType, setUserType] = useState<'adm' | 'peao'>('adm');
+  const userType: 'adm' = 'adm';
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
@@ -33,7 +33,7 @@ export default function AdminLayout({
               <Menu size={24} className="text-gray-600" />
             </button>
             <h1 className="text-xl font-semibold text-gray-800">
-              Sistema de Controle de Gado - {userType === 'adm' ? 'Administrador' : 'Peão'}
+              Sistema de Controle Financeiro
             </h1>
           </div>
         </header>

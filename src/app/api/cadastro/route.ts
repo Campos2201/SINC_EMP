@@ -1,19 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
 // import bcrypt from "bcryptjs"; // manter comentado por enquanto
+
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV === "development") {
+  globalForPrisma.prisma = prisma;
+}
 
 export async function POST(req: NextRequest) {
   try {
-    // importa o Prisma Client dinamicamente (evita erro "@prisma/client did not initialize yet")
-    const mod = await import("../../../generated/prisma");
-    const { PrismaClient } = mod as { PrismaClient: any };
-
-    // singleton para hot-reload em dev
-    const g = globalThis as unknown as { prisma?: InstanceType<typeof PrismaClient> };
-    g.prisma = g.prisma || new PrismaClient();
-    const prisma = g.prisma;
-
     const body = await req.json();
     const { isLogin, name, email, password, role } = body || {};
 
@@ -22,6 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
+    const jwtSecret = process.env.JWT_SECRET;
 
     if (isLogin) {
       const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -30,10 +29,14 @@ export async function POST(req: NextRequest) {
       const match = user.senha === password; // ainda em texto plano (só dev)
       if (!match) return NextResponse.json({ message: "Senha incorreta" }, { status: 401 });
 
+      if (!jwtSecret) {
+        return NextResponse.json({ message: "JWT_SECRET não está configurado" }, { status: 500 });
+      }
+
       // gera token JWT
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
-        process.env.JWT_SECRET!,
+        jwtSecret,
         { expiresIn: "2h" }
       );
 
@@ -66,10 +69,10 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.create({
       data: {
-        name: name,
+        name: String(name ?? ""),
         email: normalizedEmail,
-        senha: password, // texto plano só em dev
-        role: role,
+        senha: String(password), // texto plano só em dev
+        role: String(role ?? "admin"),
       },
       select: { id: true },
     });

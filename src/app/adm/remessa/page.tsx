@@ -172,44 +172,16 @@ const LotePage = () => {
           </Link>
         </div>
       </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
-        {/* Total de Lotes */}
-        <div className="bg-white p-6 rounded-lg shadow border">
+      <div className="mb-6">
+        {/* Remessa Atual */}
+        <div className="bg-white p-6 rounded-lg shadow border max-w-sm">
           <div className="flex items-center">
             <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <div className="ml-2">
-              <p className="text-sm font-medium text-gray-600">Total de Lotes Ativos</p>
-              <p className="text-2xl font-bold text-gray-900">{lotesAtivos.length}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Total de Bois */}
-        <div className="bg-white p-6 rounded-lg shadow border">
-          <div className="flex items-center">
-            <svg className="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 919.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <div className="ml-2">
-              <p className="text-sm font-medium text-gray-600">Total de Bois</p>
-              <p className="text-2xl font-bold text-gray-900">{String(totalBois)}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Lotes vacinados */}
-        <div className="bg-white p-6 rounded-lg shadow border">
-          <div className="flex items-center">
-            <svg className="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <div className="ml-2">
-              <p className="text-sm font-medium text-gray-600">Lotes Vacinados</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {totalVacinados}
-              </p>
+              <p className="text-sm font-medium text-gray-600">Remessa Atual</p>
+              <p className="text-2xl font-bold text-gray-900">{new Date().getMonth() + 1}/{new Date().getFullYear()}</p>
             </div>
           </div>
         </div>

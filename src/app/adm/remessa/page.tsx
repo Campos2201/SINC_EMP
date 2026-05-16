@@ -28,6 +28,7 @@ interface Remessa {
 const RemessaPage = () => {
   const [remessas, setRemessas] = useState<Remessa[]>([]);
   const [remessaAberta, setRemessaAberta] = useState<Remessa | null>(null);
+  const [closingRemessaId, setClosingRemessaId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mostrarVendidos, setMostrarVendidos] = useState(false);
@@ -61,6 +62,43 @@ const RemessaPage = () => {
 
     fetchRemessas();
   }, []);
+
+  const fecharRemessa = async (id: number) => {
+    const confirmar = window.confirm(
+      'Deseja realmente fechar esta remessa? Após o fechamento, não será mais possível adicionar movimentações.'
+    );
+    if (!confirmar) return;
+
+    try {
+      setClosingRemessaId(id);
+      const response = await fetch(`/api/remessa/${id}`, {
+        method: 'PUT',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(errorData.message || 'Erro ao fechar remessa');
+      }
+
+      const updatedRemessa = await response.json();
+      setRemessas((prevRemessas) =>
+        prevRemessas.map((remessa) =>
+          remessa.id === id ? { ...remessa, status: updatedRemessa.status, unicoAberto: updatedRemessa.unicoAberto } : remessa
+        )
+      );
+
+      if (remessaAberta?.id === id) {
+        setRemessaAberta(null);
+      }
+
+      alert('Remessa fechada com sucesso.');
+    } catch (err: any) {
+      console.error('Erro ao fechar remessa:', err);
+      alert('Erro ao fechar remessa: ' + (err instanceof Error ? err.message : 'Erro desconhecido'));
+    } finally {
+      setClosingRemessaId(null);
+    }
+  };
 
   // No banco, a remessa aberta é identificada por unicoAberto = true;
   // remessas fechadas têm unicoAberto = null.
@@ -173,7 +211,7 @@ const RemessaPage = () => {
             const isFechada = remessa.status === 'FECHADO';
 
             return (
-              <div key={remessa.id} className={`bg-white rounded-lg shadow border overflow-hidden ${isFechada ? 'opacity-75' : ''}`}>
+              <div key={remessa.id} className={`bg-white rounded-lg shadow border overflow-hidden min-h-[340px] ${isFechada ? 'opacity-75' : ''}`}>
                 <div className={`${isFechada ? 'bg-gray-500' : 'bg-green-600'} text-white p-4`}>
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-bold">Remessa {remessa.mes}/{remessa.ano}</h3>
@@ -181,9 +219,6 @@ const RemessaPage = () => {
                       {remessa.status}
                     </span>
                   </div>
-                  <p className="text-gray-200 text-sm mt-1">
-                    Criada em {new Date(remessa.createdAt).toLocaleDateString('pt-BR')}
-                  </p>
                 </div>
                 <div className="p-4 space-y-3">
                   <div className="flex justify-between items-center">
@@ -214,9 +249,9 @@ const RemessaPage = () => {
 
                   <div className="pt-2 border-t space-y-2">
                     {!isFechada ? (
-                      <div className="flex gap-2">
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         <Link href={`/adm/remessa/${remessa.id}`} className="flex-1">
-                          <button className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center justify-center">
+                          <button className="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center justify-center">
                             <svg
                               className="w-4 h-4 mr-2"
                               fill="none"
@@ -240,9 +275,9 @@ const RemessaPage = () => {
                           </button>
                         </Link>
                         <Link href={`/adm/remessa/${remessa.id}/adicionar-movimentacao`} className="flex-1">
-                          <button className="w-full px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors flex items-center justify-center">
+                          <button className="w-full px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
                             <svg
-                              className="w-4 h-4 mr-2"
+                              className="w-5 h-5"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -250,13 +285,34 @@ const RemessaPage = () => {
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                strokeWidth={2}
+                                strokeWidth={3}
                                 d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                               />
                             </svg>
                             Adicionar Movimentação
                           </button>
                         </Link>
+                        <button
+                          type="button"
+                          onClick={() => fecharRemessa(remessa.id)}
+                          disabled={closingRemessaId === remessa.id}
+                          className="w-full px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+                        >
+                          <svg
+                            className="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 16l4-4m0 0l-4-4m4 4H7"
+                            />
+                          </svg>
+                          {closingRemessaId === remessa.id ? 'Fechando...' : 'Fechar Remessa'}
+                        </button>
                       </div>
                     ) : (
                       <div className="w-full px-3 py-2 bg-gray-200 text-gray-700 rounded text-center font-medium">

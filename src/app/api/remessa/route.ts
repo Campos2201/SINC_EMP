@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const mes = Number(body.mes);
     const ano = Number(body.ano);
-    const status = String(body.status || "ABERTO") as RemessaStatus;
+    const status = "ABERTO" as RemessaStatus;
 
     if (!mes || mes < 1 || mes > 12) {
       return NextResponse.json({ message: "Mês inválido" }, { status: 400 });
@@ -84,25 +84,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Ano inválido" }, { status: 400 });
     }
 
-    if (!["ABERTO", "FECHADO"].includes(status)) {
-      return NextResponse.json({ message: "Status inválido" }, { status: 400 });
-    }
-
     // Verificar se já existe uma remessa aberta
-    if (status === "ABERTO") {
-      const remessaAbertaExistente = await prisma.remessa.findFirst({
-        where: {
-          userId,
-          unicoAberto: true,
-        },
-      });
+    const remessaAbertaExistente = await prisma.remessa.findFirst({
+      where: {
+        userId,
+        unicoAberto: true,
+      },
+    });
 
-      if (remessaAbertaExistente) {
-        return NextResponse.json(
-          { message: "Já existe uma remessa aberta. Feche a remessa atual antes de criar uma nova." },
-          { status: 409 }
-        );
-      }
+    if (remessaAbertaExistente) {
+      return NextResponse.json(
+        { message: "Já existe uma remessa aberta. Feche a remessa atual antes de criar uma nova." },
+        { status: 409 }
+      );
     }
 
     const remessa = await prisma.remessa.create({
@@ -111,7 +105,7 @@ export async function POST(req: NextRequest) {
         ano,
         status,
         userId,
-        unicoAberto: status === "ABERTO" ? true : null,
+        unicoAberto: true,
       },
     });
 

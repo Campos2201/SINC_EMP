@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save } from 'lucide-react';
 
@@ -8,8 +8,27 @@ export default function Page() {
     const router = useRouter();
     const [mes, setMes] = useState('');
     const [ano, setAno] = useState(new Date().getFullYear().toString());
-    const [status, setStatus] = useState('ABERTO');
     const [isSaving, setIsSaving] = useState(false);
+    const [openRemessaExists, setOpenRemessaExists] = useState(false);
+    const [openRemessaError, setOpenRemessaError] = useState<string | null>(null);
+    const status = 'ABERTO';
+
+    useEffect(() => {
+        const checkOpenRemessa = async () => {
+            try {
+                const response = await fetch('/api/remessa?aberta=true');
+                if (!response.ok) {
+                    throw new Error('Erro ao verificar remessa aberta');
+                }
+                const data = await response.json();
+                setOpenRemessaExists(Array.isArray(data) ? data.length > 0 : !!data);
+            } catch (error: any) {
+                setOpenRemessaError(error?.message || 'Erro ao verificar remessa aberta');
+            }
+        };
+
+        checkOpenRemessa();
+    }, []);
 
     const salvarRemessa = async () => {
         const mesNumero = parseInt(mes, 10);
@@ -25,8 +44,8 @@ export default function Page() {
             return;
         }
 
-        if (!status) {
-            alert('Informe o status da remessa.');
+        if (openRemessaExists) {
+            alert('Já existe uma remessa aberta. Feche a remessa atual antes de criar uma nova.');
             return;
         }
 
@@ -113,19 +132,12 @@ export default function Page() {
                             />
                         </div>
 
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Status *
-                            </label>
-                            <select
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                            >
-                                <option value="ABERTO">ABERTO</option>
-                                <option value="FECHADO">FECHADO</option>
-                            </select>
-                        </div>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-blue-800 text-sm">
+                            As remessas só podem ser criadas como <strong>ABERTO</strong>. Se já existir uma remessa aberta, você deve fechá-la antes de criar outra.
+                        </p>
                     </div>
 
                     <div className="flex gap-4 mt-8">
@@ -137,7 +149,7 @@ export default function Page() {
                         </button>
                         <button
                             onClick={salvarRemessa}
-                            disabled={!mes || !ano || isSaving}
+                            disabled={!mes || !ano || isSaving || openRemessaExists}
                             className="flex-2 bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                         >
                             <Save size={20} />

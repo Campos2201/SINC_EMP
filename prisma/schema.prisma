@@ -41,13 +41,14 @@ model Remessa{
   userId            Int
   user              User                  @relation(fields: [userId], references: [id])
 
-  unicoAberto   Boolean?                  @unique
+  unicoAberto   Boolean?
 
   movimentacoes  Movimentacao[]
   @@map("remessa")
-  @@unique([mes, ano]) // evita duas remessas do mesmo mês/ano
-
+  @@unique([userId, mes, ano]) // evita duas remessas do mesmo mês/ano por conta
+  @@unique([userId, unicoAberto]) // garante apenas uma remessa aberta por conta
 }
+
 
 model Movimentacao {
   id               Int           @id @default(autoincrement())

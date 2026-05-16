@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
 import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
@@ -6,38 +8,53 @@ if (process.env.NODE_ENV === 'development') {
   globalForPrisma.prisma = prisma;
 }
 
+async function getUserIdFromToken(): Promise<number | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    const secretValue = process.env.JWT_SECRET;
+    if (!token || !secretValue) return null;
+
+    const secret = new TextEncoder().encode(secretValue);
+    const { payload } = await jwtVerify(token, secret);
+    return payload.id as number;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchRemessaAtual() {
+  const userId = await getUserIdFromToken();
+  if (!userId) return null;
+
   try {
     const remessa = await prisma.remessa.findFirst({
-      where: { status: 'ABERTO' },
+      where: {
+        userId,
+        unicoAberto: true,
+      },
+      include: {
+        movimentacoes: true,
+      },
       orderBy: [{ ano: 'desc' }, { mes: 'desc' }],
-      select: {
-        id: true,
-        mes: true,
-        ano: true,
-        status: true
-      }
     });
 
     if (!remessa) return null;
 
-    const [gastos, ganhos] = await Promise.all([
-      prisma.movimentacao.aggregate({
-        _sum: { valor: true },
-        where: { remessaId: remessa.id, tipo: 'SAIDA' }
-      }),
-      prisma.movimentacao.aggregate({
-        _sum: { valor: true },
-        where: { remessaId: remessa.id, tipo: 'ENTRADA' }
-      })
-    ]);
+    const totalGastosSaida = remessa.movimentacoes
+      .filter((mov) => mov.tipo === 'SAIDA')
+      .reduce((acc, mov) => acc + Number(mov.valor), 0);
+
+    const totalGanhosEntrada = remessa.movimentacoes
+      .filter((mov) => mov.tipo === 'ENTRADA')
+      .reduce((acc, mov) => acc + Number(mov.valor), 0);
 
     return {
       mes: remessa.mes,
       ano: remessa.ano,
       status: remessa.status,
-      totalGastosSaida: Number(gastos._sum.valor || 0),
-      totalGanhosEntrada: Number(ganhos._sum.valor || 0)
+      totalGastosSaida,
+      totalGanhosEntrada,
     };
   } catch (error) {
     console.error('Erro ao buscar remessa atual:', error);
@@ -46,15 +63,18 @@ async function fetchRemessaAtual() {
 }
 
 async function fetchReservaSaldo() {
+  const userId = await getUserIdFromToken();
+  if (!userId) return 0;
+
   try {
     const [entradas, saidas] = await Promise.all([
       prisma.reserva.aggregate({
         _sum: { valor: true },
-        where: { tipo: 'ENTRADA' }
+        where: { tipo: 'ENTRADA', userId }
       }),
       prisma.reserva.aggregate({
         _sum: { valor: true },
-        where: { tipo: 'SAIDA' }
+        where: { tipo: 'SAIDA', userId }
       })
     ]);
 
@@ -72,7 +92,7 @@ export default async function AdminHomePage() {
   const saldoReservaLiquido = await fetchReservaSaldo();
   const totalGastosDaRemessaAtual = remessaAtual ? remessaAtual.totalGastosSaida : 0;
   const totalGanhosDaRemessaAtual = remessaAtual ? remessaAtual.totalGanhosEntrada : 0;
-  const lucroDaRemessa = totalGanhosDaRemessaAtual - totalGastosDaRemessaAtual;
+  const saldoDaRemessa = totalGanhosDaRemessaAtual - totalGastosDaRemessaAtual;
 
   return (
     <div className="space-y-6">
@@ -110,9 +130,9 @@ export default async function AdminHomePage() {
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-gray-600">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Lucro da Remessa Atual</h3>
-          <p className={`text-3xl font-bold ${lucroDaRemessa >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            R$ {lucroDaRemessa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">Saldo da Remessa Atual</h3>
+          <p className={`text-3xl font-bold ${saldoDaRemessa >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            R$ {saldoDaRemessa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           <p className="text-sm text-gray-500 mt-1">
             {remessaAtual ? 'Ganhos menos gastos da remessa' : 'Nenhuma remessa aberta'}

@@ -23,14 +23,15 @@ async function getUserIdFromToken(req: NextRequest): Promise<number | null> {
   }
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const userId = await getUserIdFromToken(req);
     if (!userId) {
       return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
     }
 
-    const remessaId = Number(params.id);
+    const { id } = await context.params;
+    const remessaId = Number(id);
     if (!remessaId) {
       return NextResponse.json({ message: "ID da remessa inválido" }, { status: 400 });
     }

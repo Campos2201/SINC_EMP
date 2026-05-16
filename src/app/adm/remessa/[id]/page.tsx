@@ -30,7 +30,7 @@ export default function AdicionarMovimentacaoPage() {
     try {
       setIsSaving(true);
 
-      const response = await fetch(/api/remessa//movimentacao, {
+      const response = await fetch(`/api/remessa/${remessaId}/movimentacao`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

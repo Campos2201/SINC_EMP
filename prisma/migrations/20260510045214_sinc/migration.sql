@@ -22,8 +22,8 @@ CREATE TABLE `remessa` (
     `userId` INTEGER NOT NULL,
     `unicoAberto` BOOLEAN NULL,
 
-    UNIQUE INDEX `remessa_unicoAberto_key`(`unicoAberto`),
-    UNIQUE INDEX `remessa_mes_ano_key`(`mes`, `ano`),
+    UNIQUE INDEX `remessa_userId_unicoAberto_key`(`userId`, `unicoAberto`),
+    UNIQUE INDEX `remessa_userId_mes_ano_key`(`userId`, `mes`, `ano`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

@@ -229,14 +229,21 @@ const RemessaPage = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Gastos Totais:</span>
                     <span className="font-bold text-lg text-red-600">
-                      R$ {gastosTotais.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {gastosTotais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Ganhos Totais:</span>
                     <span className="font-bold text-lg text-green-600">
-                      R$ {ganhosTotais.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {ganhosTotais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Saldo da Remessa:</span>
+                    <span className={`font-bold text-lg ${ganhosTotais - gastosTotais >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      R$ {(ganhosTotais - gastosTotais).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
 

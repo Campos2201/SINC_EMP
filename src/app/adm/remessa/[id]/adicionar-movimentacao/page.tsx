@@ -47,7 +47,7 @@ export default function AdicionarMovimentacaoPage() {
         },
         body: JSON.stringify({
           tipo,
-          referente: referente.trim(),
+          descricao: referente.trim(),
           valor: valorNumero,
         }),
       });

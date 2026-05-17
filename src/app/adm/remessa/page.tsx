@@ -201,12 +201,12 @@ const RemessaPage = () => {
             // Calcular gastos totais (movimentações de SAIDA)
             const gastosTotais = remessa.movimentacoes
               .filter(mov => mov.tipo === 'SAIDA')
-              .reduce((acc, mov) => acc + mov.valor, 0);
+              .reduce((acc, mov) => acc + Number(mov.valor), 0);
 
             // Calcular ganhos totais (movimentações de ENTRADA)
             const ganhosTotais = remessa.movimentacoes
               .filter(mov => mov.tipo === 'ENTRADA')
-              .reduce((acc, mov) => acc + mov.valor, 0);
+              .reduce((acc, mov) => acc + Number(mov.valor), 0);
 
             const isFechada = remessa.status === 'FECHADO';
 

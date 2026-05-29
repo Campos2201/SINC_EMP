@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 interface RelatorioTableProps {
-  tipo: 'lotes' | 'vendas' | 'lucro' | 'analise-completa';
+  tipo: 'remessas';
   dados: any[];
   resumo?: {
     [key: string]: string | number;
@@ -21,7 +21,7 @@ export default function RelatorioTable({ tipo, dados, resumo }: RelatorioTablePr
     );
   }
 
-  const colunas = Object.keys(dados[0]);
+  const colunas = Object.keys(dados[0]).filter(coluna => coluna !== 'dataMovimentacaoData');
   const colunasVisiveis = colunas.filter(col => !colunasOcultas.has(col));
 
   const toggleColunaOculta = (coluna: string) => {
@@ -36,25 +36,21 @@ export default function RelatorioTable({ tipo, dados, resumo }: RelatorioTablePr
 
   const getHeaderLabel = (coluna: string): string => {
     const labels: Record<string, string> = {
-      id: 'ID',
-      codigo: 'Código',
-      dataChegada: 'Data Chegada',
-      quantidadeBois: 'Qtd Bois',
-      pesoTotal: 'Peso Total (kg)',
-      pesoMedio: 'Peso Médio (kg)',
-      custo: 'Custo (R$)',
-      custoBois: 'Custo Bois (R$)',
-      vacinado: 'Vacinado',
-      dataVenda: 'Data Venda',
+      id: 'ID Movimentação',
+      remessaId: 'ID Remessa',
+      cliente: 'Cliente',
+      email: 'E-mail',
+      mes: 'Mês',
+      ano: 'Ano',
+      status: 'Status da Remessa',
+      dataMovimentacao: 'Data da Movimentação',
+      descricao: 'Descrição',
+      tipo: 'Tipo',
       valor: 'Valor (R$)',
-      lote: 'Lote',
-      lucro: 'Lucro (R$)',
-      margemLucro: 'Margem (%)',
-      lucroPorBoi: 'Lucro/Boi (R$)',
-      pesoMedioGeral: 'Peso Médio Geral',
-      valorVenda: 'Valor Venda (R$)',
-      status: 'Status',
-      lucroTotal: 'Lucro Total (R$)'
+      totalMovimentacoes: 'Total de Movimentações',
+      valorEntradas: 'Entradas (R$)',
+      valorSaidas: 'Saídas (R$)',
+      saldoTotal: 'Saldo Total (R$)'
     };
     return labels[coluna] || coluna.replace(/([A-Z])/g, ' $1').trim();
   };
@@ -118,7 +114,7 @@ export default function RelatorioTable({ tipo, dados, resumo }: RelatorioTablePr
         </div>
 
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-700 font-medium">📊 {dados.length} registros</span>
+          <span className="text-gray-700 font-medium">📊 {resumo?.totalMovimentacoes ?? dados.length} movimentações</span>
         </div>
       </div>
 
@@ -178,16 +174,26 @@ export default function RelatorioTable({ tipo, dados, resumo }: RelatorioTablePr
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
           <h3 className="font-semibold text-gray-800 mb-4">📈 Resumo Estatístico</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(resumo).map(([chave, valor]) => (
-              <div key={chave} className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
-                <p className="text-sm text-gray-600 font-medium">
-                  {formatarChave(chave)}
-                </p>
-                <p className="text-2xl font-bold text-blue-600 mt-1">
-                  {formatarValor(valor, chave)}
-                </p>
-              </div>
-            ))}
+            {Object.entries(resumo).map(([chave, valor]) => {
+              const estilosPorChave: Record<string, string> = {
+                totalEntradas: 'bg-green-50 border-green-200 text-green-700',
+                totalSaidas: 'bg-red-50 border-red-200 text-red-700',
+                saldoTotal: 'bg-blue-50 border-blue-200 text-blue-700',
+              };
+
+              const classeCard = estilosPorChave[chave] || 'bg-white border-blue-100 text-blue-600';
+
+              return (
+                <div key={chave} className={`rounded-lg p-4 shadow-sm border ${classeCard}`}>
+                  <p className="text-sm text-gray-600 font-medium">
+                    {formatarChave(chave)}
+                  </p>
+                  <p className="text-2xl font-bold mt-1">
+                    {formatarValor(valor, chave)}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -222,12 +228,33 @@ function formatarValor(valor: any, campo: string): string {
     return String(valor);
   }
 
+  if (campo === 'tipo') {
+    return valor === 'ENTRADA' ? 'Entrada' : valor === 'SAIDA' ? 'Saída' : String(valor);
+  }
+
+  if (
+    campo === 'totalEntradas' ||
+    campo === 'totalSaidas' ||
+    campo === 'saldoTotal' ||
+    campo === 'valorTotal' ||
+    campo === 'lucroTotal' ||
+    campo === 'lucroTotalGeral' ||
+    campo === 'custoTotal' ||
+    campo === 'custosTotal'
+  ) {
+    const num = parseFloat(String(valor));
+    if (!isNaN(num)) {
+      return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+  }
+
   // Se é valor monetário (mas não dataVenda que já foi tratado acima)
   if (
     campo.toLowerCase().includes('custo') ||
     campo.toLowerCase().includes('valor') ||
     campo.toLowerCase().includes('lucro') ||
     campo.toLowerCase().includes('preco') ||
+    campo.toLowerCase().includes('saldo') ||
     (campo.toLowerCase().includes('venda') && !campo.toLowerCase().includes('data'))
   ) {
     const num = parseFloat(String(valor));
@@ -252,7 +279,12 @@ function formatarValor(valor: any, campo: string): string {
 
 function formatarChave(chave: string): string {
   const mapa: Record<string, string> = {
-    totalRegistros: 'Total de Registros',
+    totalRegistros: 'Total de Movimentações no Extrato',
+    totalMovimentacoes: 'Total de Movimentações',
+    totalEntradas: 'Total de Entradas',
+    totalSaidas: 'Total de Saídas',
+    saldoTotal: 'Saldo Total',
+    totalRemessas: 'Total de Remessas',
     custoTotal: 'Custo Total',
     quantidadeTotal: 'Quantidade Total',
     pesoMedioGeral: 'Peso Médio Geral',

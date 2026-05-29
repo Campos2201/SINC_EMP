@@ -25,13 +25,30 @@ interface Remessa {
   };
 }
 
+const nomesMeses = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
+
+const formatarMes = (mes: number) => nomesMeses[mes - 1] || 'Mês inválido';
+
 const RemessaPage = () => {
   const [remessas, setRemessas] = useState<Remessa[]>([]);
   const [remessaAberta, setRemessaAberta] = useState<Remessa | null>(null);
   const [closingRemessaId, setClosingRemessaId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mostrarVendidos, setMostrarVendidos] = useState(false);
+  const [filtroStatus, setFiltroStatus] = useState<'ABERTO' | 'FECHADO' | 'TODAS'>('ABERTO');
 
   useEffect(() => {
     const fetchRemessas = async () => {
@@ -102,9 +119,9 @@ const RemessaPage = () => {
 
   // No banco, a remessa aberta é identificada por unicoAberto = true;
   // remessas fechadas têm unicoAberto = null.
-  const remessasExibidas = mostrarVendidos
+  const remessasExibidas = filtroStatus === 'TODAS'
     ? remessas
-    : remessas.filter(remessa => remessa.status === 'ABERTO');
+    : remessas.filter(remessa => remessa.status === filtroStatus);
 
   if (loading) {
     return (
@@ -135,18 +152,22 @@ const RemessaPage = () => {
           <p className="text-gray-600">Visualize e gerencie as remessas</p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Toggle para mostrar/ocultar lotes vendidos */}
-          <label className="flex items-center gap-2 cursor-pointer bg-gray-100 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
-            <input
-              type="checkbox"
-              checked={mostrarVendidos}
-              onChange={(e) => setMostrarVendidos(e.target.checked)}
-              className="w-4 h-4 rounded text-green-600"
-            />
-            <span className="text-sm font-medium text-gray-700">
-              {mostrarVendidos ? 'Ocultar' : 'Mostrar'} Remessas Fechadas
-            </span>
-          </label>
+          <div className="flex items-center bg-gray-100 rounded-md p-1">
+            {(['ABERTO', 'FECHADO', 'TODAS'] as const).map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setFiltroStatus(status)}
+                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  filtroStatus === status
+                    ? 'bg-green-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {status === 'ABERTO' ? 'Abertas' : status === 'FECHADO' ? 'Fechadas' : 'Todas'}
+              </button>
+            ))}
+          </div>
           <Link href="/adm/remessa/nova-remessa">
             <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
               <svg
@@ -175,7 +196,7 @@ const RemessaPage = () => {
               <p className="text-sm font-medium text-gray-600">Remessa Atual</p>
               {remessaAberta ? (
                 <p className="text-2xl font-bold text-gray-900">
-                  {remessaAberta.mes}/{remessaAberta.ano}
+                  {formatarMes(remessaAberta.mes)} / {remessaAberta.ano}
                 </p>
               ) : (
                 <p className="text-2xl font-bold text-gray-900">Nenhuma remessa aberta</p>
@@ -192,7 +213,11 @@ const RemessaPage = () => {
       {remessasExibidas.length === 0 ? (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
           <p className="text-yellow-800 font-medium">
-            {mostrarVendidos ? 'Nenhuma remessa encontrada' : 'Nenhuma remessa ativa encontrada'}
+            {filtroStatus === 'ABERTO'
+              ? 'Nenhuma remessa aberta encontrada'
+              : filtroStatus === 'FECHADO'
+                ? 'Nenhuma remessa fechada encontrada'
+                : 'Nenhuma remessa encontrada'}
           </p>
         </div>
       ) : (
@@ -214,7 +239,7 @@ const RemessaPage = () => {
               <div key={remessa.id} className={`bg-white rounded-lg shadow border overflow-hidden min-h-[340px] ${isFechada ? 'opacity-75' : ''}`}>
                 <div className={`${isFechada ? 'bg-gray-500' : 'bg-green-600'} text-white p-4`}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-bold">Remessa {remessa.mes}/{remessa.ano}</h3>
+                    <h3 className="text-xl font-bold">Remessa {formatarMes(remessa.mes)} / {remessa.ano}</h3>
                     <span className={`text-xs font-bold px-2 py-1 rounded ${isFechada ? 'bg-red-600' : 'bg-blue-600'}`}>
                       {remessa.status}
                     </span>
@@ -223,7 +248,7 @@ const RemessaPage = () => {
                 <div className="p-4 space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Mês/Ano:</span>
-                    <span className="font-bold text-lg text-gray-900">{remessa.mes}/{remessa.ano}</span>
+                    <span className="font-bold text-lg text-gray-900">{formatarMes(remessa.mes)} / {remessa.ano}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
@@ -255,32 +280,33 @@ const RemessaPage = () => {
                   </div>
 
                   <div className="pt-2 border-t space-y-2">
-                    {!isFechada ? (
-                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                        <Link href={`/adm/remessa/${remessa.id}`} className="flex-1">
-                          <button className="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center justify-center">
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                              />
-                            </svg>
-                            Ver Detalhes
-                          </button>
-                        </Link>
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <Link href={`/adm/remessa/${remessa.id}`} className="flex-1">
+                        <button className="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center justify-center">
+                          <svg
+                            className="w-4 h-4 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                          Ver Detalhes
+                        </button>
+                      </Link>
+
+                      {!isFechada && (
                         <Link href={`/adm/remessa/${remessa.id}/adicionar-movimentacao`} className="flex-1">
                           <button className="w-full px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
                             <svg
@@ -299,6 +325,9 @@ const RemessaPage = () => {
                             Adicionar Movimentação
                           </button>
                         </Link>
+                      )}
+
+                      {!isFechada && (
                         <button
                           type="button"
                           onClick={() => fecharRemessa(remessa.id)}
@@ -320,12 +349,9 @@ const RemessaPage = () => {
                           </svg>
                           {closingRemessaId === remessa.id ? 'Fechando...' : 'Fechar Remessa'}
                         </button>
-                      </div>
-                    ) : (
-                      <div className="w-full px-3 py-2 bg-gray-200 text-gray-700 rounded text-center font-medium">
-                        ⚠️ Remessa fechada - apenas consulta
-                      </div>
-                    )}
+                      )}
+                    </div>
+
                   </div>
                 </div>
               </div>

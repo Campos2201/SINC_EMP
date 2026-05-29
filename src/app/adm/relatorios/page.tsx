@@ -3,20 +3,18 @@
 import React, { useState } from 'react';
 import RelatorioTable from './components/RelatorioTable';
 
-export type RelatorioTipo = 'lotes' | 'vendas' | 'lucro' | 'analise-completa';
+export type RelatorioTipo = 'remessas';
 
 export interface FiltrosRelatorio {
   tipo: RelatorioTipo;
   dataInicio?: string;
   dataFim?: string;
-  minValor?: number;
-  maxValor?: number;
   ordenarPor?: string;
 }
 
 export default function RelatoriosPage() {
   const [filtros, setFiltros] = useState<FiltrosRelatorio>({
-    tipo: 'lotes',
+    tipo: 'remessas',
     ordenarPor: 'data_desc'
   });
   
@@ -29,7 +27,7 @@ export default function RelatoriosPage() {
     const { name, value } = e.target;
     setFiltros(prev => ({
       ...prev,
-      [name]: name.startsWith('min') || name.startsWith('max') ? parseFloat(value) || undefined : value
+      [name]: value
     }));
   };
 
@@ -42,8 +40,6 @@ export default function RelatoriosPage() {
       queryParams.append('tipo', filtros.tipo);
       if (filtros.dataInicio) queryParams.append('dataInicio', filtros.dataInicio);
       if (filtros.dataFim) queryParams.append('dataFim', filtros.dataFim);
-      if (filtros.minValor !== undefined) queryParams.append('minValor', filtros.minValor.toString());
-      if (filtros.maxValor !== undefined) queryParams.append('maxValor', filtros.maxValor.toString());
       if (filtros.ordenarPor) queryParams.append('ordenarPor', filtros.ordenarPor);
 
       const response = await fetch(`/api/relatorios?${queryParams.toString()}`);
@@ -65,10 +61,7 @@ export default function RelatoriosPage() {
 
   const getTituloRelatorio = (): string => {
     const titulos: Record<RelatorioTipo, string> = {
-      lotes: 'Relatório de Lotes',
-      vendas: 'Relatório de Vendas',
-      lucro: 'Análise de Lucro por Lote',
-      'analise-completa': 'Análise Completa do Rebanho'
+      remessas: 'Extrato detalhado de entradas e saídas'
     };
     return titulos[filtros.tipo];
   };
@@ -77,7 +70,7 @@ export default function RelatoriosPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-4xl font-bold text-gray-800">Gerador de Relatórios</h1>
-        <p className="text-gray-600 mt-2">Crie tabelas informativas baseadas em dados financeiros e operacionais</p>
+        <p className="text-gray-600 mt-2">Exiba o extrato detalhado de entradas e saídas de todas as remessas no intervalo de datas selecionado</p>
       </div>
 
       {/* Seção de Filtros */}
@@ -96,10 +89,7 @@ export default function RelatoriosPage() {
               onChange={handleFiltroChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent"
             >
-              <option value="lotes">📋 Lotes</option>
-              <option value="vendas">💰 Vendas</option>
-              <option value="lucro">📈 Análise de Lucro</option>
-              <option value="analise-completa">📊 Análise Completa</option>
+              <option value="remessas">📦 Remessas</option>
             </select>
           </div>
 
@@ -127,36 +117,6 @@ export default function RelatoriosPage() {
               name="dataFim"
               value={filtros.dataFim || ''}
               onChange={handleFiltroChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent"
-            />
-          </div>
-
-          {/* Valor Mínimo */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Valor Mínimo (R$)
-            </label>
-            <input
-              type="number"
-              name="minValor"
-              value={filtros.minValor || ''}
-              onChange={handleFiltroChange}
-              placeholder="0.00"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent"
-            />
-          </div>
-
-          {/* Valor Máximo */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Valor Máximo (R$)
-            </label>
-            <input
-              type="number"
-              name="maxValor"
-              value={filtros.maxValor || ''}
-              onChange={handleFiltroChange}
-              placeholder="999999.99"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent"
             />
           </div>
@@ -223,7 +183,7 @@ export default function RelatoriosPage() {
             <h2 className="text-2xl font-semibold text-gray-800">{getTituloRelatorio()}</h2>
             <div className="text-sm text-gray-600">
               {dados.resumo && (
-                <p>📊 {dados.resumo.totalRegistros} registros encontrados</p>
+                <p>📊 {dados.resumo.totalMovimentacoes ?? dados.dados.length} movimentações encontradas</p>
               )}
             </div>
           </div>

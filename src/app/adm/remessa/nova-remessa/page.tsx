@@ -6,7 +6,21 @@ import { ArrowLeft, Save } from 'lucide-react';
 
 export default function Page() {
     const router = useRouter();
-    const [mes, setMes] = useState('');
+    const monthOptions = [
+        { value: '1', label: 'Janeiro' },
+        { value: '2', label: 'Fevereiro' },
+        { value: '3', label: 'Março' },
+        { value: '4', label: 'Abril' },
+        { value: '5', label: 'Maio' },
+        { value: '6', label: 'Junho' },
+        { value: '7', label: 'Julho' },
+        { value: '8', label: 'Agosto' },
+        { value: '9', label: 'Setembro' },
+        { value: '10', label: 'Outubro' },
+        { value: '11', label: 'Novembro' },
+        { value: '12', label: 'Dezembro' },
+    ];
+    const [mes, setMes] = useState((new Date().getMonth() + 1).toString());
     const [ano, setAno] = useState(new Date().getFullYear().toString());
     const [isSaving, setIsSaving] = useState(false);
     const [openRemessaExists, setOpenRemessaExists] = useState(false);
@@ -106,15 +120,20 @@ export default function Page() {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Mês *
                             </label>
-                            <input
-                                type="number"
-                                min={1}
-                                max={12}
+                            <select
                                 value={mes}
                                 onChange={(e) => setMes(e.target.value)}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                placeholder="Ex: 5"
-                            />
+                            >
+                                <option value="" disabled>
+                                    Selecione o mês
+                                </option>
+                                {monthOptions.map((month) => (
+                                    <option key={month.value} value={month.value}>
+                                        {month.label}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div>

@@ -23,6 +23,49 @@ async function getUserIdFromToken(req: NextRequest): Promise<number | null> {
   }
 }
 
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  try {
+    const userId = await getUserIdFromToken(req);
+    if (!userId) {
+      return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    const remessaId = Number(id);
+    if (!remessaId) {
+      return NextResponse.json({ message: "ID da remessa inválido" }, { status: 400 });
+    }
+
+    const remessa = await prisma.remessa.findFirst({
+      where: {
+        id: remessaId,
+        userId,
+      },
+      include: {
+        movimentacoes: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        _count: {
+          select: {
+            movimentacoes: true,
+          },
+        },
+      },
+    });
+
+    if (!remessa) {
+      return NextResponse.json({ message: "Remessa não encontrada" }, { status: 404 });
+    }
+
+    return NextResponse.json(remessa, { status: 200 });
+  } catch (err: any) {
+    console.error("API /api/remessa/[id] GET error:", err);
+    return NextResponse.json({ message: err?.message || "Erro ao buscar remessa" }, { status: 500 });
+  }
+}
+
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const userId = await getUserIdFromToken(req);

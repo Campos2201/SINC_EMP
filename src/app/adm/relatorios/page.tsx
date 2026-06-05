@@ -136,7 +136,6 @@ export default function RelatoriosPage() {
               <option value="data_asc">Data (Antiga)</option>
               <option value="valor_desc">Valor (Maior)</option>
               <option value="valor_asc">Valor (Menor)</option>
-              <option value="nome_asc">Nome (A-Z)</option>
             </select>
           </div>
         </div>

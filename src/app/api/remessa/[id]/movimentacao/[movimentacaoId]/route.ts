@@ -87,3 +87,50 @@ export async function PUT(
     return NextResponse.json({ message: err?.message || "Erro ao atualizar movimentação" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ id: string; movimentacaoId: string }> }
+) {
+  try {
+    const userId = await getUserIdFromToken(req);
+    if (!userId) {
+      return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
+    }
+
+    const { id, movimentacaoId } = await context.params;
+    const remessaId = Number(id);
+    const movimentacaoDbId = Number(movimentacaoId);
+
+    if (!remessaId || !movimentacaoDbId) {
+      return NextResponse.json({ message: "ID inválido" }, { status: 400 });
+    }
+
+    const movimentacao = await prisma.movimentacao.findFirst({
+      where: {
+        id: movimentacaoDbId,
+        remessaId,
+      },
+      include: {
+        remessa: true,
+      },
+    });
+
+    if (!movimentacao) {
+      return NextResponse.json({ message: "Movimentação não encontrada" }, { status: 404 });
+    }
+
+    if (movimentacao.remessa.status === 'FECHADO') {
+      return NextResponse.json({ message: "Não é possível excluir movimentações de remessas fechadas" }, { status: 403 });
+    }
+
+    await prisma.movimentacao.delete({
+      where: { id: movimentacaoDbId },
+    });
+
+    return NextResponse.json({ message: "Movimentação excluída com sucesso" }, { status: 200 });
+  } catch (err: any) {
+    console.error("API /api/remessa/[id]/movimentacao/[movimentacaoId] DELETE error:", err);
+    return NextResponse.json({ message: err?.message || "Erro ao excluir movimentação" }, { status: 500 });
+  }
+}

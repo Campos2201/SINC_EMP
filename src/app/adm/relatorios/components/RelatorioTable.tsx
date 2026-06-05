@@ -21,7 +21,10 @@ export default function RelatorioTable({ tipo, dados, resumo }: RelatorioTablePr
     );
   }
 
-  const colunas = Object.keys(dados[0]).filter(coluna => coluna !== 'dataMovimentacaoData');
+  const colunasExcluidas = ['id', 'remessaId', 'cliente', 'email', 'mes', 'ano'];
+  const colunas = Object.keys(dados[0]).filter(
+    coluna => coluna !== 'dataMovimentacaoData' && !colunasExcluidas.includes(coluna)
+  );
   const colunasVisiveis = colunas.filter(col => !colunasOcultas.has(col));
 
   const toggleColunaOculta = (coluna: string) => {
@@ -38,6 +41,7 @@ export default function RelatorioTable({ tipo, dados, resumo }: RelatorioTablePr
     const labels: Record<string, string> = {
       id: 'ID Movimentação',
       remessaId: 'ID Remessa',
+      remessa: 'Remessa',
       cliente: 'Cliente',
       email: 'E-mail',
       mes: 'Mês',

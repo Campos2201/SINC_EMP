@@ -67,10 +67,22 @@ async function gerarRelatórioRemessas(
   dataFilter: any,
   ordenarPor?: string
 ) {
+  const nomesMeses = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro'
+  ];
+
   const remessas = await prisma.remessa.findMany({
-    where: {
-      userId
-    },
     include: {
       user: {
         select: {
@@ -94,10 +106,9 @@ async function gerarRelatórioRemessas(
     remessa.movimentacoes.map((movimentacao: any) => ({
       id: movimentacao.id,
       remessaId: remessa.id,
+      remessa: `${nomesMeses[remessa.mes - 1] || 'Mês inválido'}/${remessa.ano}`,
       cliente: remessa.user?.name || 'Cliente não informado',
       email: remessa.user?.email || '-',
-      mes: remessa.mes,
-      ano: remessa.ano,
       status: remessa.status,
       dataMovimentacao: new Date(movimentacao.createdAt).toLocaleDateString('pt-BR'),
       dataMovimentacaoData: movimentacao.createdAt,
@@ -130,8 +141,7 @@ function aplicarOrdenacao(dados: any[], ordenarPor: string, camposNumericos: str
     data_desc: (a, b) => new Date(b.dataMovimentacaoData || 0).getTime() - new Date(a.dataMovimentacaoData || 0).getTime(),
     data_asc: (a, b) => new Date(a.dataMovimentacaoData || 0).getTime() - new Date(b.dataMovimentacaoData || 0).getTime(),
     valor_desc: (a, b) => parseFloat(b.valor || 0) - parseFloat(a.valor || 0),
-    valor_asc: (a, b) => parseFloat(a.valor || 0) - parseFloat(b.valor || 0),
-    nome_asc: (a, b) => (a.cliente || '').localeCompare(b.cliente || '')
+    valor_asc: (a, b) => parseFloat(a.valor || 0) - parseFloat(b.valor || 0)
   };
 
   const comparador = ordenadores[ordenarPor] || ordenadores.data_desc;

@@ -30,7 +30,6 @@ async function fetchRemessaAtual() {
   try {
     const remessa = await prisma.remessa.findFirst({
       where: {
-        userId,
         unicoAberto: true,
       },
       include: {
@@ -70,11 +69,11 @@ async function fetchReservaSaldo() {
     const [entradas, saidas] = await Promise.all([
       prisma.reserva.aggregate({
         _sum: { valor: true },
-        where: { tipo: 'ENTRADA', userId }
+        where: { tipo: 'ENTRADA' }
       }),
       prisma.reserva.aggregate({
         _sum: { valor: true },
-        where: { tipo: 'SAIDA', userId }
+        where: { tipo: 'SAIDA' }
       })
     ]);
 

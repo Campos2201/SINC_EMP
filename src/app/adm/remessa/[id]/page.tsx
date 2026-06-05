@@ -107,12 +107,44 @@ export default function RemessaDetalhesPage() {
   }, [remessa]);
 
   const abrirEdicaoMovimentacao = (movimentacao: Movimentacao) => {
+    if (remessa?.status === 'FECHADO') {
+      return;
+    }
+
     setEditingMovimentacao(movimentacao);
     setEditForm({
       descricao: movimentacao.descricao,
       tipo: movimentacao.tipo,
       valor: Number(movimentacao.valor).toFixed(2),
     });
+  };
+
+  const excluirMovimentacao = async (movimentacaoId: number) => {
+    if (!remessa || remessa.status === 'FECHADO') {
+      return;
+    }
+
+    const confirmar = window.confirm('Tem certeza que deseja excluir esta movimentação?');
+    if (!confirmar) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/remessa/${remessaId}/movimentacao/${movimentacaoId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(errorData.message || 'Erro ao excluir movimentação');
+      }
+
+      await carregarRemessa();
+      alert('Movimentação excluída com sucesso.');
+    } catch (error) {
+      console.error('Erro ao excluir movimentação:', error);
+      alert('Erro ao excluir movimentação: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
+    }
   };
 
   const salvarEdicaoMovimentacao = async () => {
@@ -280,13 +312,22 @@ export default function RemessaDetalhesPage() {
                       <td className={`px-4 py-3 text-right text-sm font-semibold ${movimentacao.tipo === 'ENTRADA' ? 'text-green-600' : 'text-red-600'}`}>
                         R$ {Number(movimentacao.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm">
+                      <td className="px-4 py-3 text-right text-sm space-x-2">
                         <button
                           type="button"
                           onClick={() => abrirEdicaoMovimentacao(movimentacao)}
-                          className="rounded bg-amber-500 px-3 py-1.5 font-medium text-white hover:bg-amber-600"
+                          disabled={remessa.status === 'FECHADO'}
+                          className={`rounded px-3 py-1.5 font-medium text-white ${remessa.status === 'FECHADO' ? 'bg-gray-300 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600'}`}
                         >
                           Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => excluirMovimentacao(movimentacao.id)}
+                          disabled={remessa.status === 'FECHADO'}
+                          className={`rounded px-3 py-1.5 font-medium text-white ${remessa.status === 'FECHADO' ? 'bg-gray-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+                        >
+                          Excluir
                         </button>
                       </td>
                     </tr>

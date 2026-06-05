@@ -35,7 +35,6 @@ export async function GET(req: NextRequest) {
     const remessas = abertaParam === 'true'
       ? await prisma.remessa.findMany({
           where: {
-            userId,
             unicoAberto: true,
           },
           include: {
@@ -47,7 +46,6 @@ export async function GET(req: NextRequest) {
           orderBy: { createdAt: "desc" },
         })
       : await prisma.remessa.findMany({
-          where: { userId },
           include: {
             movimentacoes: true,
             _count: {
@@ -84,10 +82,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Ano inválido" }, { status: 400 });
     }
 
-    // Verificar se já existe uma remessa aberta
+    // Verificar se já existe uma remessa aberta globalmente
     const remessaAbertaExistente = await prisma.remessa.findFirst({
       where: {
-        userId,
         unicoAberto: true,
       },
     });
@@ -95,6 +92,21 @@ export async function POST(req: NextRequest) {
     if (remessaAbertaExistente) {
       return NextResponse.json(
         { message: "Já existe uma remessa aberta. Feche a remessa atual antes de criar uma nova." },
+        { status: 409 }
+      );
+    }
+
+    // Verificar se já existe uma remessa para o mesmo mês/ano
+    const remessaMesAnoExistente = await prisma.remessa.findFirst({
+      where: {
+        mes,
+        ano,
+      },
+    });
+
+    if (remessaMesAnoExistente) {
+      return NextResponse.json(
+        { message: "Já existe remessa para esse mês/ano." },
         { status: 409 }
       );
     }

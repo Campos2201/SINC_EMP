@@ -56,7 +56,6 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     const remessa = await prisma.remessa.findFirst({
       where: {
         id: remessaId,
-        userId,
       },
     });
 

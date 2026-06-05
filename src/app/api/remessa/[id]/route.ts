@@ -39,7 +39,6 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     const remessa = await prisma.remessa.findFirst({
       where: {
         id: remessaId,
-        userId,
       },
       include: {
         movimentacoes: {
@@ -82,7 +81,6 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     const remessa = await prisma.remessa.findFirst({
       where: {
         id: remessaId,
-        userId,
       },
     });
 

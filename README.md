@@ -16,11 +16,10 @@ O SINC EMP é uma plataforma desenvolvida para facilitar o gerenciamento de pequ
 - Tailwind CSS
 - Recharts
 - JWT
-- Nodemailer
 
 ---
 
-## 3. Requisitos
+## 2. Requisitos
 
 - Node.js 20+
 - MySQL 8+
@@ -28,20 +27,19 @@ O SINC EMP é uma plataforma desenvolvida para facilitar o gerenciamento de pequ
 
 ---
 
-## 4. Instalação
+## 3. Instalação
 
-### 4.1 Clonar o repositório
+### 3.1 Clonar o repositório
 ```bash
 git clone <url-do-repositorio>
-cd PastoSmart
 ```
 
-### 4.2 Instalar dependências
+### 3.2 Instalar dependências
 ```bash
 npm install
 ```
 
-### 4.3 Configurar variáveis de ambiente
+### 3.3 Configurar variáveis de ambiente
 
 Crie um arquivo **.env.local**:
 
@@ -58,7 +56,7 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 ---
 
-## 5. Banco de Dados
+## 4. Banco de Dados
 
 ### Rodar migrações
 ```bash
@@ -72,7 +70,7 @@ npx prisma generate
 
 ---
 
-## 6. Executando o Projeto
+## 5. Executando o Projeto
 
 ```bash
 npm run dev
@@ -83,7 +81,7 @@ A aplicação ficará disponível em **http://localhost:3000**
 
 ---
 
-## 7. Build de Produção
+## 6. Build de Produção
 
 ```bash
 npm run build
@@ -92,33 +90,14 @@ npm start
 
 ---
 
-## 8. Deploy (Vercel)
-
-### 1. Instalar CLI
-```bash
-npm i -g vercel
-```
-
-### 2. Login
-```bash
-vercel login
-```
-
-### 3. Deploy do projeto
-```bash
-vercel
-```
-
-
-
-### 5. Executar migrações em produção
+### 7. Executar migrações em produção
 ```bash
 npx prisma migrate deploy
 ```
 
 ---
 
-## 10. Criar Usuário
+## 8. Criar Usuário
 
 ```sql
 INSERT INTO User (name, email, senha, role)
@@ -129,7 +108,7 @@ VALUES ('Admin', 'admin@example.com', 'admin123', 'admin');
 
 ---
 
-## 11. Estrutura do Projeto
+## 9. Estrutura do Projeto
 
 - `/src/app/api` – rotas da API  
 - `/src/app/(auth)` – autenticação  
@@ -139,7 +118,7 @@ VALUES ('Admin', 'admin@example.com', 'admin123', 'admin');
 
 ---
 
-## 12. Contribuição
+## 10. Contribuição
 
 ```bash
 git checkout dev

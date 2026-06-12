@@ -1,26 +1,10 @@
-# PastoSmart
 
-Sistema web para gestão de gado, incluindo controle de lotes, pesagens, vacinações, vendas e alertas automatizados.
-
+Sistema web para gestão de pequeno negócios.
 ---
 
 ## 1. Sobre o Projeto
 
-O PastoSmart é uma plataforma desenvolvida para facilitar o gerenciamento de propriedades pecuárias. As principais funcionalidades incluem:
-
-- **Gestão de Lotes e Animais**
-- **Histórico de Pesagens**
-- **Controle de Vacinação**
-- **Registro de Vendas e Cálculo de Lucro**
-- **Alertas por Peso Médio**
-- **Gráficos e Relatórios**
-- **Recuperação de Senha via E-mail**
-
-Níveis de acesso:
-
-- **Administrador** — controle total do sistema  
-- **Peão** — acesso restrito às operações diárias
-
+O SINC EMP é uma plataforma desenvolvida para facilitar o gerenciamento de pequenos negócios.
 ---
 
 ## 2. Tecnologias
@@ -63,17 +47,10 @@ Crie um arquivo **.env.local**:
 
 ```env
 # Banco de dados
-DATABASE_URL="mysql://root:SUA_SENHA@127.0.0.1:3306/pastosmart_db"
+DATABASE_URL="mysql://"seu_banco":SUA_SENHA@127.0.0.1:3306/sinc_emp"
 
 # JWT
 JWT_SECRET="uma_chave_secreta_muito_segura_aqui"
-
-# E-mail (recuperação de senha)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=noreplypastosmart@gmail.com
-EMAIL_PASS=wilszwcbtzdslqlo
-EMAIL_FROM=noreplypastosmart@gmail.com
 
 # URL pública da aplicação
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
@@ -132,18 +109,7 @@ vercel login
 vercel
 ```
 
-### 4. Configurar variáveis de ambiente na Vercel
 
-| Variável | Descrição |
-|----------|-----------|
-| DATABASE_URL | Conexão MySQL |
-| JWT_SECRET | Chave JWT |
-| EMAIL_HOST | SMTP |
-| EMAIL_PORT | Porta |
-| EMAIL_USER | Conta de envio |
-| EMAIL_PASS | Senha de app |
-| EMAIL_FROM | Remetente |
-| NEXT_PUBLIC_BASE_URL | URL pública |
 
 ### 5. Executar migrações em produção
 ```bash
@@ -152,16 +118,7 @@ npx prisma migrate deploy
 
 ---
 
-## 9. Recuperação de Senha – Fluxo
-
-1. Usuário solicita redefinição em **/recuperar-senha**  
-2. Sistema envia e-mail com token  
-3. Usuário acessa **/redefinir-senha/[token]**  
-4. Senha é atualizada  
-
----
-
-## 10. Criar Administrador Inicial
+## 10. Criar Usuário
 
 ```sql
 INSERT INTO User (name, email, senha, role)
